@@ -20,7 +20,7 @@
                 <i class="fa-solid fa-utensils"></i> Meal Planner Pro
             </h1>
             <div class="text-xs bg-emerald-700 px-2 py-1 rounded-full font-medium">
-                Google Sheets & Delete Ready
+                Stable & Crash-Proof
             </div>
         </div>
     </header>
@@ -215,5 +215,273 @@
 
     <!-- JavaScript Logic -->
     <script>
-        // State Management
-        let meals = JSON.parse(localStorage.getItem('
+        // State Management with safe parsing
+        let meals = JSON.parse(localStorage.getItem('mp_meals')) || [];
+        let weeklyPlan = JSON.parse(localStorage.getItem('mp_weeklyPlan')) || {
+            'Monday': '', 'Tuesday': '', 'Wednesday': '', 'Thursday': '', 'Friday': '', 'Saturday': '', 'Sunday': ''
+        };
+        let groceryList = JSON.parse(localStorage.getItem('mp_groceryList')) || [];
+
+        const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        // Default date to today safely
+        const dateInput = document.getElementById('meal-date');
+        if (dateInput) dateInput.valueAsDate = new Date();
+
+        // Image Base64 Handler
+        let currentPhotoBase64 = '';
+        const photoInput = document.getElementById('meal-photo');
+        if (photoInput) {
+            photoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        currentPhotoBase64 = event.target.result;
+                        const preview = document.getElementById('photo-preview');
+                        if (preview) preview.src = currentPhotoBase64;
+                        const container = document.getElementById('photo-preview-container');
+                        if (container) container.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Form Submission
+        const mealForm = document.getElementById('meal-form');
+        if (mealForm) {
+            mealForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const newMeal = {
+                    id: Date.now().toString(),
+                    name: document.getElementById('meal-name').value,
+                    category: document.getElementById('meal-category').value,
+                    date: document.getElementById('meal-date').value,
+                    recipe: document.getElementById('meal-recipe').value,
+                    ingredients: document.getElementById('meal-ingredients').value,
+                    photo: currentPhotoBase64 || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80'
+                };
+
+                meals.unshift(newMeal);
+                saveData();
+                this.reset();
+                currentPhotoBase64 = '';
+                const container = document.getElementById('photo-preview-container');
+                if (container) container.classList.add('hidden');
+                if (dateInput) dateInput.valueAsDate = new Date();
+                
+                alert('Meal saved successfully!');
+                switchTab('history');
+            });
+        }
+
+        function saveData() {
+            localStorage.setItem('mp_meals', JSON.stringify(meals));
+            localStorage.setItem('mp_weeklyPlan', JSON.stringify(weeklyPlan));
+            localStorage.setItem('mp_groceryList', JSON.stringify(groceryList));
+            renderHistory();
+            renderPlanner();
+            renderGrocery();
+        }
+
+        // Delete Meal from History
+        function deleteMeal(id) {
+            if (confirm('Are you sure you want to delete this meal from history?')) {
+                meals = meals.filter(m => m.id !== id);
+                for (let day of daysOfWeek) {
+                    if (weeklyPlan[day] === id) {
+                        weeklyPlan[day] = '';
+                    }
+                }
+                saveData();
+            }
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('tab-' + tabId);
+            if (target) target.classList.add('active');
+
+            const navs = ['log', 'history', 'planner', 'grocery'];
+            navs.forEach(n => {
+                const btn = document.getElementById('nav-' + n);
+                if (btn) {
+                    if (n === tabId) {
+                        btn.classList.remove('text-slate-400');
+                        btn.classList.add('text-emerald-600');
+                    } else {
+                        btn.classList.remove('text-emerald-600');
+                        btn.classList.add('text-slate-400');
+                    }
+                }
+            });
+            window.scrollTo(0, 0);
+        }
+
+        // Render History Table with safety checks
+        function renderHistory() {
+            const tbody = document.getElementById('history-table-body');
+            if (!tbody) return;
+            const searchEl = document.getElementById('search-history');
+            const search = searchEl ? searchEl.value.toLowerCase() : '';
+            const catFilterEl = document.getElementById('filter-category');
+            const catFilter = catFilterEl ? catFilterEl.value : '';
+
+            const filtered = meals.filter(m => {
+                const name = m.name || '';
+                const ingredients = m.ingredients || '';
+                const matchesSearch = name.toLowerCase().includes(search) || ingredients.toLowerCase().includes(search);
+                const matchesCat = !catFilter || m.category === catFilter;
+                return matchesSearch && matchesCat;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-slate-400">No meals logged yet or matching search.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(m => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3">
+                        <img src="${m.photo || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80'}" class="w-12 h-12 object-cover rounded-lg border border-slate-200" alt="Meal">
+                    </td>
+                    <td class="p-3 whitespace-nowrap text-xs font-medium">${m.date || ''}</td>
+                    <td class="p-3 font-semibold text-slate-800">${m.name || 'Unnamed Meal'}</td>
+                    <td class="p-3"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold">${m.category || 'Other'}</span></td>
+                    <td class="p-3 text-xs text-slate-500 max-w-xs truncate">${m.ingredients || 'None listed'}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteMeal('${m.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg transition" title="Delete meal">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Render Weekly Planner
+        function renderPlanner() {
+            const container = document.getElementById('weekly-planner-container');
+            if (!container) return;
+            container.innerHTML = daysOfWeek.map(day => {
+                const assignedMealId = weeklyPlan[day];
+                const options = meals.map(m => `<option value="${m.id}" ${m.id === assignedMealId ? 'selected' : ''}>${m.name || 'Meal'} (${m.category || 'Other'})</option>`).join('');
+                
+                return `
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50/50 gap-2">
+                        <span class="font-semibold text-slate-700 w-28">${day}</span>
+                        <select onchange="updateWeeklyPlan('${day}', this.value)" class="w-full sm:w-auto flex-grow px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <option value="">-- Select a meal --</option>
+                            ${options}
+                        </select>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateWeeklyPlan(day, mealId) {
+            weeklyPlan[day] = mealId;
+            localStorage.setItem('mp_weeklyPlan', JSON.stringify(weeklyPlan));
+        }
+
+        // Grocery List Generation
+        function generateGroceryListFromPlan() {
+            let extractedItems = [];
+            daysOfWeek.forEach(day => {
+                const mealId = weeklyPlan[day];
+                if (mealId) {
+                    const meal = meals.find(m => m.id === mealId);
+                    if (meal && meal.ingredients) {
+                        const items = meal.ingredients.split(',').map(i => i.trim()).filter(i => i.length > 0);
+                        extractedItems.push(...items);
+                    }
+                }
+            });
+
+            const uniqueItems = [...new Set(extractedItems)];
+            groceryList = uniqueItems.map(item => ({ text: item, completed: false }));
+            saveData();
+            switchTab('grocery');
+            alert('Grocery list successfully updated from your weekly plan!');
+        }
+
+        function renderGrocery() {
+            const container = document.getElementById('grocery-list-container');
+            if (!container) return;
+            if (groceryList.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-slate-400 text-sm">Your grocery list is empty. Assign meals in the planner and click 'Generate Grocery List'.</div>`;
+                return;
+            }
+
+            container.innerHTML = groceryList.map((item, index) => `
+                <div class="flex items-center justify-between p-3.5 bg-white hover:bg-slate-50 transition">
+                    <label class="flex items-center gap-3 cursor-pointer select-none flex-grow">
+                        <input type="checkbox" ${item.completed ? 'checked' : ''} onchange="toggleGroceryItem(${index})" class="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                        <span class="text-sm ${item.completed ? 'line-through text-slate-400' : 'text-slate-700'}">${item.text}</span>
+                    </label>
+                    <button onclick="removeGroceryItem(${index})" class="text-slate-400 hover:text-rose-500 p-1 transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function toggleGroceryItem(index) {
+            groceryList[index].completed = !groceryList[index].completed;
+            saveData();
+        }
+
+        function removeGroceryItem(index) {
+            groceryList.splice(index, 1);
+            saveData();
+        }
+
+        function addManualGrocery() {
+            const input = document.getElementById('manual-grocery-item');
+            if (!input) return;
+            const val = input.value.trim();
+            if (val) {
+                groceryList.push({ text: val, completed: false });
+                input.value = '';
+                saveData();
+            }
+        }
+
+        // CSV Export
+        function exportToCSV() {
+            if (meals.length === 0) {
+                alert('No meals to export.');
+                return;
+            }
+            let csv = 'Date,Meal Name,Category,Ingredients,Recipe\n';
+            meals.forEach(m => {
+                const date = m.date || '';
+                const name = (m.name || '').replace(/"/g, '""');
+                const cat = m.category || '';
+                const ing = (m.ingredients || '').replace(/"/g, '""');
+                const rec = (m.recipe || '').replace(/"/g, '""');
+                csv += `"${date}","${name}","${cat}","${ing}","${rec}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'meal_history.csv');
+            a.click();
+        }
+
+        function exportToGoogleSheetsCSV() {
+            exportToCSV();
+            if (confirm('CSV downloaded successfully!\n\nWould you like to open Google Sheets now to import it?')) {
+                window.open('https://sheets.new', '_blank');
+            }
+        }
+
+        // Initial Render
+        renderHistory();
+        renderPlanner();
+        renderGrocery();
+    </script>
+</body>
+</html>
