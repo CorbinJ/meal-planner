@@ -19,8 +19,8 @@
             <h1 class="text-xl font-bold flex items-center gap-2">
                 <i class="fa-solid fa-utensils"></i> Meal Planner Pro
             </h1>
-            <div class="text-xs bg-emerald-700 px-2 py-1 rounded-full font-medium">
-                Import & Export Ready
+            <div id="form-mode-badge" class="text-xs bg-emerald-700 px-2 py-1 rounded-full font-medium">
+                Log Mode
             </div>
         </div>
     </header>
@@ -28,14 +28,20 @@
     <!-- Main Container -->
     <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-6 pb-24">
 
-        <!-- TAB 1: LOG MEAL -->
+        <!-- TAB 1: LOG / EDIT MEAL -->
         <section id="tab-log" class="tab-content active">
             <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-camera text-emerald-600"></i> Log a New Meal
-                </h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="form-title" class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-camera text-emerald-600"></i> Log a New Meal
+                    </h2>
+                    <button type="button" id="cancel-edit-btn" onclick="resetMealForm()" class="hidden text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-1 px-2.5 rounded-lg transition">
+                        Cancel Edit
+                    </button>
+                </div>
 
                 <form id="meal-form" class="space-y-4">
+                    <input type="hidden" id="edit-meal-id" value="">
                     <div>
                         <label class="block text-sm font-semibold text-slate-700 mb-1">Meal Name</label>
                         <input type="text" id="meal-name" required placeholder="e.g., Creamy Pesto Salmon & Asparagus" 
@@ -87,7 +93,7 @@
                         <img id="photo-preview" class="h-32 object-cover rounded-xl border border-slate-200 shadow-sm" alt="Preview">
                     </div>
 
-                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition duration-200 shadow-sm">
+                    <button type="submit" id="form-submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition duration-200 shadow-sm">
                         Save Meal to History
                     </button>
                 </form>
@@ -139,7 +145,7 @@
                                 <th class="p-3">Meal Name</th>
                                 <th class="p-3">Category</th>
                                 <th class="p-3">Ingredients</th>
-                                <th class="p-3 text-center">Action</th>
+                                <th class="p-3 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="history-table-body" class="divide-y divide-slate-200 bg-white">
@@ -265,7 +271,7 @@
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     parseAndImportCSV(event.target.result);
-                    e.target.value = ''; // Reset file input
+                    e.target.value = '';
                 };
                 reader.readAsText(file);
             });
@@ -279,12 +285,10 @@
             }
 
             let importedCount = 0;
-            // Skip header at index 0
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
 
-                // Parse CSV columns respecting quoted text
                 const row = [];
                 let inQuote = false;
                 let currentVal = '';
@@ -336,32 +340,93 @@
             }
         }
 
-        // Form Submission
+        // Form Submission (Handles both Create and Edit)
         const mealForm = document.getElementById('meal-form');
         if (mealForm) {
             mealForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                const newMeal = {
-                    id: Date.now().toString(),
-                    name: document.getElementById('meal-name').value,
-                    category: document.getElementById('meal-category').value,
-                    date: document.getElementById('meal-date').value,
-                    recipe: document.getElementById('meal-recipe').value,
-                    ingredients: document.getElementById('meal-ingredients').value,
-                    photo: currentPhotoBase64 || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80'
-                };
+                const editId = document.getElementById('edit-meal-id').value;
+                const name = document.getElementById('meal-name').value;
+                const category = document.getElementById('meal-category').value;
+                const date = document.getElementById('meal-date').value;
+                const recipe = document.getElementById('meal-recipe').value;
+                const ingredients = document.getElementById('meal-ingredients').value;
 
-                meals.unshift(newMeal);
+                if (editId) {
+                    // Update existing meal
+                    const meal = meals.find(m => m.id === editId);
+                    if (meal) {
+                        meal.name = name;
+                        meal.category = category;
+                        meal.date = date;
+                        meal.recipe = recipe;
+                        meal.ingredients = ingredients;
+                        if (currentPhotoBase64) {
+                            meal.photo = currentPhotoBase64;
+                        }
+                    }
+                    alert('Meal updated successfully!');
+                } else {
+                    // Create new meal
+                    const newMeal = {
+                        id: Date.now().toString(),
+                        name: name,
+                        category: category,
+                        date: date,
+                        recipe: recipe,
+                        ingredients: ingredients,
+                        photo: currentPhotoBase64 || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=150&q=80'
+                    };
+                    meals.unshift(newMeal);
+                    alert('Meal saved successfully!');
+                }
+
                 saveData();
-                this.reset();
-                currentPhotoBase64 = '';
-                const container = document.getElementById('photo-preview-container');
-                if (container) container.classList.add('hidden');
-                if (dateInput) dateInput.valueAsDate = new Date();
-                
-                alert('Meal saved successfully!');
+                resetMealForm();
                 switchTab('history');
             });
+        }
+
+        function editMeal(id) {
+            const meal = meals.find(m => m.id === id);
+            if (!meal) return;
+
+            document.getElementById('edit-meal-id').value = meal.id;
+            document.getElementById('meal-name').value = meal.name || '';
+            document.getElementById('meal-category').value = meal.category || '';
+            document.getElementById('meal-date').value = meal.date || new Date().toISOString().split('T')[0];
+            document.getElementById('meal-recipe').value = meal.recipe || '';
+            document.getElementById('meal-ingredients').value = meal.ingredients || '';
+
+            // Show preview if exists
+            if (meal.photo) {
+                const preview = document.getElementById('photo-preview');
+                if (preview) preview.src = meal.photo;
+                const container = document.getElementById('photo-preview-container');
+                if (container) container.classList.remove('hidden');
+            }
+
+            // Update UI headers for edit mode
+            document.getElementById('form-title').innerHTML = `<i class="fa-solid fa-pen-to-square text-emerald-600"></i> Edit Meal`;
+            document.getElementById('form-mode-badge').innerText = `Edit Mode`;
+            document.getElementById('form-submit-btn').innerText = `Update Meal`;
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+
+            switchTab('log');
+        }
+
+        function resetMealForm() {
+            document.getElementById('meal-form').reset();
+            document.getElementById('edit-meal-id').value = '';
+            currentPhotoBase64 = '';
+            const container = document.getElementById('photo-preview-container');
+            if (container) container.classList.add('hidden');
+            if (dateInput) dateInput.valueAsDate = new Date();
+
+            document.getElementById('form-title').innerHTML = `<i class="fa-solid fa-camera text-emerald-600"></i> Log a New Meal`;
+            document.getElementById('form-mode-badge').innerText = `Log Mode`;
+            document.getElementById('form-submit-btn').innerText = `Save Meal to History`;
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
         }
 
         function saveData() {
@@ -439,7 +504,10 @@
                     <td class="p-3 font-semibold text-slate-800">${m.name || 'Unnamed Meal'}</td>
                     <td class="p-3"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold">${m.category || 'Other'}</span></td>
                     <td class="p-3 text-xs text-slate-500 max-w-xs truncate">${m.ingredients || 'None listed'}</td>
-                    <td class="p-3 text-center">
+                    <td class="p-3 text-center whitespace-nowrap">
+                        <button onclick="editMeal('${m.id}')" class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg transition mr-1" title="Edit meal">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
                         <button onclick="deleteMeal('${m.id}')" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg transition" title="Delete meal">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
