@@ -486,37 +486,74 @@
             }
         }
 
-        // Calendar Planner Renderer
         function renderCalendar() {
-            const grid = document.getElementById('weekly-planner-grid');
-            if (!grid) return;
-            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            grid.innerHTML = days.map(day => `
-                <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 space-y-3">
-                    <h3 class="font-bold text-slate-700 text-sm border-b pb-2">${day}</h3>
-                    <div class="text-xs text-slate-400 italic">No meal assigned</div>
+    const grid = document.getElementById('weekly-planner-grid');
+    if (!grid) return;
+    
+    // Load saved weekly plan from localStorage or initialize empty
+    let weeklyPlan = JSON.parse(localStorage.getItem('meal_planner_weekly') || '{}');
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    grid.innerHTML = days.map(day => {
+        const assignedMealId = weeklyPlan[day] || '';
+        
+        // Build options for select dropdown from your logged meals history
+        let optionsHtml = `<option value="">-- Choose a meal --</option>`;
+        meals.forEach(m => {
+            const isSelected = m.id === assignedMealId ? 'selected' : '';
+            optionsHtml += `<option value="${m.id}" ${isSelected}>${escapeHtml(m.name)} (${m.category || 'Other'})</option>`;
+        });
+
+        // Find assigned meal details if exists
+        const assignedMeal = meals.find(m => m.id === assignedMealId);
+        let detailHtml = `<div class="text-xs text-slate-400 italic mt-2">No meal assigned</div>`;
+        
+        if (assignedMeal) {
+            const safeIngredients = escapeHtml(assignedMeal.ingredients || '');
+            const safeRecipe = escapeHtml(assignedMeal.recipe || '');
+            detailHtml = `
+                <div class="mt-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-100 text-xs space-y-1">
+                    <p class="font-bold text-emerald-900">${escapeHtml(assignedMeal.name)}</p>
+                    <p class="text-emerald-700 truncate cursor-pointer hover:underline" onclick="openRecipeModal('${escapeHtml(assignedMeal.name)}', '${safeIngredients}', '${safeRecipe}')" title="Click to view full recipe">
+                        🍴 View Ingredients & Recipe
+                    </p>
                 </div>
-            `).join('');
+            `;
         }
 
-        // Grocery List Manager
-        function renderGrocery() {
-            const ul = document.getElementById('grocery-list-ul');
-            if (!ul) return;
-            if (groceryList.length === 0) {
-                ul.innerHTML = `<li class="p-4 text-center text-slate-400 text-sm">Your grocery list is empty.</li>`;
-                return;
-            }
-            ul.innerHTML = groceryList.map((item, idx) => `
-                <li class="py-2.5 flex justify-between items-center text-sm">
-                    <span class="${item.done ? 'line-through text-slate-400' : 'text-slate-700'}">${escapeHtml(item.text)}</span>
-                    <div class="flex gap-2">
-                        <button onclick="toggleGrocery(${idx})" class="text-emerald-600 hover:text-emerald-800 text-xs">✓</button>
-                        <button onclick="deleteGrocery(${idx})" class="text-rose-500 hover:text-rose-700 text-xs">✕</button>
+        return `
+            <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between space-y-3 shadow-sm">
+                <div>
+                    <h3 class="font-bold text-slate-700 text-sm border-b pb-2 flex justify-between items-center">
+                        <span>${day}</span>
+                        <span class="text-[10px] text-slate-400 font-normal">Active Plan</span>
+                    </h3>
+                    <div class="mt-3 space-y-2">
+                        <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Assign Meal</label>
+                        <select onchange="assignMealToDay('${day}', this.value)" class="w-full px-2.5 py-1.5 border rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            ${optionsHtml}
+                        </select>
                     </div>
-                </li>
-            `).join('');
-        }
+                </div>
+                <div>
+                    ${detailHtml}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function assignMealToDay(day, mealId) {
+    let weeklyPlan = JSON.parse(localStorage.getItem('meal_planner_weekly') || '{}');
+    if (mealId) {
+        weeklyPlan[day] = mealId;
+    } else {
+        delete weeklyPlan[day];
+    }
+    localStorage.setItem('meal_planner_weekly', JSON.stringify(weeklyPlan));
+    renderCalendar(); // Re-render to show updated details card
+}
+        
 
         function addGroceryItem() {
             const input = document.getElementById('new-grocery-item');
