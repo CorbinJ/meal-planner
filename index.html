@@ -18,11 +18,11 @@
                 <i class="fa-solid fa-utensils"></i> Meal Planner Pro
             </h1>
             <nav class="flex gap-2 sm:gap-4 text-sm font-medium overflow-x-auto w-full sm:w-auto justify-center">
-                <button onclick="switchTab('log')" id="tab-log" class="px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white">Log Meal</button>
-                <button onclick="switchTab('history')" id="tab-history" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50">History</button>
-                <button onclick="switchTab('calendar')" id="tab-calendar" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50">Planner</button>
-                <button onclick="switchTab('grocery')" id="tab-grocery" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50">Grocery</button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50">Data / Backup</button>
+                <button onclick="switchTab('log')" id="tab-log" class="px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold">Log Meal</button>
+                <button onclick="switchTab('history')" id="tab-history" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">History</button>
+                <button onclick="switchTab('calendar')" id="tab-calendar" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Planner</button>
+                <button onclick="switchTab('grocery')" id="tab-grocery" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Grocery</button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Data / Backup</button>
             </nav>
         </div>
     </header>
@@ -180,7 +180,7 @@
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
             <div class="p-4 bg-emerald-600 text-white flex justify-between items-center">
                 <h3 id="modalTitle" class="font-bold text-lg">Meal Details</h3>
-                <button onclick="closeRecipeModal()" class="text-white hover:text-emerald-200 text-xl font-bold px-2">×</button>
+                <button onclick="closeRecipeModal()" class="text-white hover:text-emerald-200 text-xl font-bold px-2">&times;</button>
             </div>
             <div class="p-6 overflow-y-auto space-y-4">
                 <div>
@@ -208,14 +208,19 @@
         // Set default date on load
         document.getElementById('meal-date').valueAsDate = new Date();
 
-        // Tab Switcher
+        // Fully functional Tab Switcher
         function switchTab(tabName) {
             ['log', 'history', 'calendar', 'grocery', 'settings'].forEach(t => {
-                document.getElementById(`section-${t}`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).className = "px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-white";
+                const section = document.getElementById(`section-${t}`);
+                const tabBtn = document.getElementById(`tab-${t}`);
+                if (section) section.classList.add('hidden');
+                if (tabBtn) tabBtn.className = "px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100";
             });
-            document.getElementById(`section-${tabName}`).classList.remove('hidden');
-            document.getElementById(`tab-${tabName}`).className = "px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white";
+
+            const activeSection = document.getElementById(`section-${tabName}`);
+            const activeTabBtn = document.getElementById(`tab-${tabName}`);
+            if (activeSection) activeSection.classList.remove('hidden');
+            if (activeTabBtn) activeTabBtn.className = "px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold";
 
             if (tabName === 'history') renderHistory();
             if (tabName === 'calendar') renderCalendar();
@@ -225,11 +230,11 @@
         // Safe HTML escape helper
         function escapeHtml(str) {
             return String(str || '')
-                .replace(/&/g, '&')
-                .replace(/</g, '<')
-                .replace(/>/g, '>')
-                .replace(/"/g, '"')
-                .replace(/'/g, ''');
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
         }
 
         // Handle Photo Upload Preview
@@ -258,7 +263,7 @@
                 name: document.getElementById('meal-name').value,
                 ingredients: document.getElementById('meal-ingredients').value,
                 recipe: document.getElementById('meal-recipe').value,
-                photo: currentPhotoBase64 || (editIndex !== "" ? meals[editIndex].photo : '')
+                photo: currentPhotoBase64 || (editIndex !== "" && meals[editIndex] ? meals[editIndex].photo : '')
             };
 
             if (editIndex !== "") {
@@ -349,6 +354,7 @@
                     </tr>
                 `;
             }).join('');
+        }
 
         // Modal Controls
         function openRecipeModal(name, ingredients, recipe) {
@@ -362,7 +368,7 @@
             document.getElementById('recipeModal').classList.add('hidden');
         }
 
-        // Edit & Delete
+         // Edit & Delete
         function editMeal(index) {
             const m = meals[index];
             if (!m) return;
@@ -392,7 +398,7 @@
             }
         }
 
-         // Calendar Planner Placeholder Renderer
+        // Calendar Planner Renderer
         function renderCalendar() {
             const grid = document.getElementById('weekly-planner-grid');
             if (!grid) return;
@@ -405,7 +411,7 @@
             `).join('');
         }
 
-          // Grocery List Manager
+        // Grocery List Manager
         function renderGrocery() {
             const ul = document.getElementById('grocery-list-ul');
             if (!ul) return;
@@ -476,8 +482,9 @@
             document.body.appendChild(dlAnchor);
             dlAnchor.click();
             dlAnchor.remove();
+        }
 
-            function importData(event) {
+        function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
@@ -486,7 +493,6 @@
                     if (file.name.endsWith('.json')) {
                         meals = JSON.parse(e.target.result);
                     } else if (file.name.endsWith('.csv')) {
-                        // Basic CSV parser fallback
                         const lines = e.target.result.split('\n');
                         meals = [];
                         for (let i = 1; i < lines.length; i++) {
@@ -513,6 +519,9 @@
             };
             reader.readAsText(file);
         }
+
+        // Initialize default view to Log tab on startup
+        switchTab('log');
     </script>
 </body>
 </html>
