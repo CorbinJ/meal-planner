@@ -19,6 +19,7 @@
             </h1>
             <nav class="flex gap-2 sm:gap-4 text-sm font-medium overflow-x-auto w-full sm:w-auto justify-center">
                 <button onclick="switchTab('log')" id="tab-log" class="px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold">Log Meal</button>
+                <button onclick="switchTab('recipes')" id="tab-recipes" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Recipes</button>
                 <button onclick="switchTab('history')" id="tab-history" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">History</button>
                 <button onclick="switchTab('calendar')" id="tab-calendar" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Planner</button>
                 <button onclick="switchTab('grocery')" id="tab-grocery" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Grocery</button>
@@ -43,12 +44,10 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Meal Photo (Upload or Take Picture)</label>
                     <div class="flex flex-col sm:flex-row gap-2">
-                        <!-- Upload from gallery/files -->
                         <label class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl cursor-pointer text-sm font-semibold transition">
                             <i class="fa-solid fa-upload"></i> Upload Image
                             <input type="file" id="meal-photo-upload" accept="image/*" onchange="handleGeminiPhotoScan(event)" class="hidden">
                         </label>
-                        <!-- Capture directly from device camera -->
                         <label class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-xl cursor-pointer text-sm font-semibold transition">
                             <i class="fa-solid fa-camera"></i> Take Picture
                             <input type="file" id="meal-photo-camera" accept="image/*" capture="environment" onchange="handleGeminiPhotoScan(event)" class="hidden">
@@ -105,7 +104,21 @@
             </form>
         </section>
 
-        <!-- ================= 2. HISTORY TAB ================= -->
+        <!-- ================= 2. RECIPE LIBRARY TAB ================= -->
+        <section id="section-recipes" class="hidden space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 items-center">
+                <input type="text" id="search-recipes" placeholder="Search saved recipes..." oninput="renderRecipes()" class="px-3 py-2 border rounded-xl text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <button onclick="openRecipeFormModal()" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">
+                    <i class="fa-solid fa-plus mr-1"></i> Add New Recipe
+                </button>
+            </div>
+
+            <div id="recipes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- ================= 3. HISTORY TAB ================= -->
         <section id="section-history" class="hidden space-y-4">
             <div class="flex flex-col sm:flex-row justify-between gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                 <input type="text" id="search-history" placeholder="Search meals or ingredients..." oninput="renderHistory()" class="px-3 py-2 border rounded-xl text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -144,18 +157,18 @@
             </div>
         </section>
 
-        <!-- ================= 3. CALENDAR PLANNER TAB ================= -->
+        <!-- ================= 4. CALENDAR PLANNER TAB ================= -->
         <section id="section-calendar" class="hidden space-y-4">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h2 class="text-lg font-bold text-slate-800 mb-2">Weekly Meal Planner</h2>
-                <p class="text-xs text-slate-500 mb-4">Assign logged or custom meals to your weekly schedule.</p>
+                <p class="text-xs text-slate-500 mb-4">Assign logged or custom recipes to your weekly schedule.</p>
                 <div id="weekly-planner-grid" class="grid grid-cols-1 md:grid-cols-7 gap-4">
                     <!-- Populated dynamically -->
                 </div>
             </div>
         </section>
 
-        <!-- ================= 4. GROCERY LIST TAB ================= -->
+        <!-- ================= 5. GROCERY LIST TAB ================= -->
         <section id="section-grocery" class="hidden space-y-4 max-w-xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h2 class="text-lg font-bold text-slate-800">Grocery List</h2>
             <div class="flex gap-2">
@@ -167,11 +180,10 @@
             </ul>
         </section>
 
-        <!-- ================= 5. DATA / BACKUP TAB ================= -->
+        <!-- ================= 6. DATA / BACKUP TAB ================= -->
         <section id="section-settings" class="hidden space-y-6 max-w-xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h2 class="text-lg font-bold text-slate-800">Data & Settings</h2>
             <div class="space-y-4 text-sm">
-                <!-- Gemini API Key setting -->
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                     <h3 class="font-semibold text-slate-700">Gemini AI Vision API Key</h3>
                     <p class="text-xs text-slate-500">Enter your Gemini API key to enable automated photo recognition and auto-fill.</p>
@@ -180,7 +192,7 @@
 
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                     <h3 class="font-semibold text-slate-700">Export Backup</h3>
-                    <p class="text-xs text-slate-500">Download your complete meal database as a JSON backup or CSV file.</p>
+                    <p class="text-xs text-slate-500">Download your complete database (Meals & Recipes) as JSON or CSV.</p>
                     <div class="flex gap-3 pt-1">
                         <button onclick="exportJSON()" class="px-3 py-2 bg-slate-700 text-white rounded-xl text-xs font-medium hover:bg-slate-800 transition">Download JSON</button>
                         <button onclick="exportCSV()" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-medium hover:bg-emerald-700 transition">Download CSV</button>
@@ -188,8 +200,7 @@
                 </div>
 
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                    <h3 class="font-semibold text-slate-700">Restore / Import Backup (CSV or JSON)</h3>
-                    <p class="text-xs text-slate-500">Upload your `.csv` history or `.json` backup file to load your meals.</p>
+                    <h3 class="font-semibold text-slate-700">Restore / Import Backup</h3>
                     <input type="file" id="import-file" accept=".json,.csv" onchange="importData(event)" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border rounded-xl">
                 </div>
             </div>
@@ -213,6 +224,10 @@
                     <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Recipe / Instructions</h4>
                     <p id="modalRecipe" class="text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm whitespace-pre-wrap"></p>
                 </div>
+                <div id="modalSourceContainer" class="hidden">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Source Link</h4>
+                    <a id="modalSourceLink" href="" target="_blank" class="text-emerald-600 hover:underline text-sm break-all"></a>
+                </div>
             </div>
             <div class="p-4 bg-slate-50 border-t flex justify-end">
                 <button onclick="closeRecipeModal()" class="px-4 py-2 bg-slate-200 text-slate-800 rounded-xl text-sm font-medium hover:bg-slate-300 transition">Close</button>
@@ -220,10 +235,57 @@
         </div>
     </div>
 
+    <!-- ADD/EDIT RECIPE LIBRARY MODAL -->
+    <div id="recipeFormModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-4 bg-emerald-600 text-white flex justify-between items-center">
+                <h3 id="recipeFormTitle" class="font-bold text-lg">Add Recipe to Library</h3>
+                <button onclick="closeRecipeFormModal()" class="text-white hover:text-emerald-200 text-xl font-bold px-2">&times;</button>
+            </div>
+            <form id="recipeLibForm" onsubmit="handleRecipeLibSubmit(event)" class="p-6 overflow-y-auto space-y-4">
+                <input type="hidden" id="recipe-lib-index" value="">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Recipe Title</label>
+                    <input type="text" id="lib-name" required placeholder="e.g. Mujadara" class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Category</label>
+                    <select id="lib-category" class="w-full px-3 py-2 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="Pasta Dish">Pasta Dish</option>
+                        <option value="Rice Dish">Rice Dish</option>
+                        <option value="Seafood">Seafood</option>
+                        <option value="Vegetarian">Vegetarian</option>
+                        <option value="Soup / Curry">Soup / Curry</option>
+                        <option value="Tacos / Wraps">Tacos / Wraps</option>
+                        <option value="Beef / Pork">Beef / Pork</option>
+                        <option value="Other">Other</option>
+                    </select>
+                 </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Recipe URL (Website Source)</label>
+                    <input type="url" id="lib-url" placeholder="https://www.themediterraneandish.com/mujadara..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ingredients</label>
+                    <textarea id="lib-ingredients" rows="3" placeholder="Black lentils, onions, rice, olive oil..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Instructions / Notes</label>
+                    <textarea id="lib-recipe" rows="4" placeholder="1 3/4 cups water, 8 minutes on manual..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeRecipeFormModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 transition">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition shadow-sm">Save Recipe</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Application JavaScript Logic -->
     <script>
         // State management
         let meals = JSON.parse(localStorage.getItem('meal_planner_meals') || '[]');
+        let recipes = JSON.parse(localStorage.getItem('meal_planner_recipes') || '[]');
         let groceryList = JSON.parse(localStorage.getItem('meal_planner_grocery') || '[]');
         let currentPhotoBase64 = '';
 
@@ -238,12 +300,11 @@
             localStorage.setItem('gemini_api_key', key);
         }
 
-        // Set default date on load
         document.getElementById('meal-date').valueAsDate = new Date();
 
-        // Fully functional Tab Switcher
+        // Tab Switcher
         function switchTab(tabName) {
-            ['log', 'history', 'calendar', 'grocery', 'settings'].forEach(t => {
+            ['log', 'recipes', 'history', 'calendar', 'grocery', 'settings'].forEach(t => {
                 const section = document.getElementById(`section-${t}`);
                 const tabBtn = document.getElementById(`tab-${t}`);
                 if (section) section.classList.add('hidden');
@@ -255,12 +316,12 @@
             if (activeSection) activeSection.classList.remove('hidden');
             if (activeTabBtn) activeTabBtn.className = "px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold";
 
+            if (tabName === 'recipes') renderRecipes();
             if (tabName === 'history') renderHistory();
             if (tabName === 'calendar') renderCalendar();
             if (tabName === 'grocery') renderGrocery();
         }
 
-        // Safe HTML escape helper
         function escapeHtml(str) {
             return String(str || '')
                 .replace(/&/g, '&amp;')
@@ -270,7 +331,107 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // ================= GEMINI AI VISION INTEGRATION (gemini-flash-latest) =================
+         // ================= RECIPE LIBRARY MANAGEMENT =================
+        function renderRecipes() {
+            const grid = document.getElementById('recipes-grid');
+            if (!grid) return;
+            const search = (document.getElementById('search-recipes')?.value || '').toLowerCase();
+
+            const filtered = recipes.filter(r => 
+                (r.name || '').toLowerCase().includes(search) || 
+                (r.ingredients || '').toLowerCase().includes(search)
+            );
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-100">No saved recipes found. Click "Add New Recipe" to build your library!</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map((r, idx) => {
+                const safeName = escapeHtml(r.name || 'Untitled Recipe');
+                const safeCategory = escapeHtml(r.category || 'Other');
+                const safeIngredients = escapeHtml(r.ingredients || 'None');
+                const safeRecipe = escapeHtml(r.recipe || 'No instructions.');
+                const safeUrl = escapeHtml(r.url || '');
+
+                return `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between space-y-3 hover:shadow-md transition">
+                        <div>
+                            <div class="flex justify-between items-start gap-2 mb-1">
+                                <h3 class="font-bold text-slate-800 text-base">${safeName}</h3>
+                                <span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap">${safeCategory}</span>
+                            </div>
+                            ${safeUrl ? `<a href="${safeUrl}" target="_blank" class="text-xs text-emerald-600 hover:underline block truncate mb-2"><i class="fa-solid fa-link mr-1"></i>${safeUrl}</a>` : ''}
+                            <p class="text-xs text-slate-500 line-clamp-3 mt-2"><strong class="text-slate-700">Ingredients:</strong> ${safeIngredients}</p>
+                        </div>
+                        <div class="flex justify-between items-center pt-3 border-t border-slate-100 text-xs">
+                            <button onclick="openRecipeModal('${safeName}', '${safeIngredients}', '${safeRecipe}', '${safeUrl}')" class="text-emerald-600 font-semibold hover:underline">View Full Recipe</button>
+                            <div class="space-x-2">
+                                <button onclick="editRecipeLib(${idx})" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen-to-square"></i></button>
+                                <button onclick="deleteRecipeLib(${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openRecipeFormModal() {
+            document.getElementById('recipeLibForm').reset();
+            document.getElementById('recipe-lib-index').value = '';
+            document.getElementById('recipeFormTitle').innerText = 'Add Recipe to Library';
+            document.getElementById('recipeFormModal').classList.remove('hidden');
+        }
+
+        function closeRecipeFormModal() {
+            document.getElementById('recipeFormModal').classList.add('hidden');
+        }
+
+        function handleRecipeLibSubmit(event) {
+            event.preventDefault();
+            const idx = document.getElementById('recipe-lib-index').value;
+            const recipeData = {
+                id: idx !== '' && recipes[idx] ? recipes[idx].id : Date.now().toString(),
+                name: document.getElementById('lib-name').value,
+                category: document.getElementById('lib-category').value,
+                url: document.getElementById('lib-url').value,
+                ingredients: document.getElementById('lib-ingredients').value,
+                recipe: document.getElementById('lib-recipe').value
+            };
+
+            if (idx !== '') {
+                recipes[idx] = recipeData;
+            } else {
+                recipes.unshift(recipeData);
+            }
+
+            saveAndSync();
+            closeRecipeFormModal();
+            renderRecipes();
+        }
+
+        function editRecipeLib(idx) {
+            const r = recipes[idx];
+            if (!r) return;
+            document.getElementById('recipe-lib-index').value = idx;
+            document.getElementById('lib-name').value = r.name || '';
+            document.getElementById('lib-category').value = r.category || 'Other';
+            document.getElementById('lib-url').value = r.url || '';
+            document.getElementById('lib-ingredients').value = r.ingredients || '';
+            document.getElementById('lib-recipe').value = r.recipe || '';
+            document.getElementById('recipeFormTitle').innerText = 'Edit Recipe';
+            document.getElementById('recipeFormModal').classList.remove('hidden');
+        }
+
+        function deleteRecipeLib(idx) {
+            if (confirm("Delete this recipe from your library?")) {
+                recipes.splice(idx, 1);
+                saveAndSync();
+                renderRecipes();
+            }
+        }
+
+          // ================= GEMINI AI VISION INTEGRATION =================
         async function handleGeminiPhotoScan(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -311,23 +472,17 @@
                     });
 
                     const data = await response.json();
-                    
-                    if (data.error) {
-                        throw new Error(data.error.message || "API Error");
-                    }
+                    if (data.error) throw new Error(data.error.message || "API Error");
 
                     if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
                         let textResponse = data.candidates[0].content.parts[0].text;
                         textResponse = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
-                        
                         const parsed = JSON.parse(textResponse);
 
                         if (parsed.name) document.getElementById('meal-name').value = parsed.name;
                         if (parsed.category) document.getElementById('meal-category').value = parsed.category;
                         if (parsed.ingredients) document.getElementById('meal-ingredients').value = parsed.ingredients;
                         if (parsed.recipe) document.getElementById('meal-recipe').value = parsed.recipe;
-                    } else {
-                        throw new Error("Unexpected response structure from Gemini API");
                     }
                 } catch (err) {
                     console.error("Gemini Vision Error:", err);
@@ -339,7 +494,7 @@
             reader.readAsDataURL(file);
         }
 
-        // Handle Form Submit (Create or Edit)
+        // Handle Form Submit (History Log)
         function handleMealSubmit(event) {
             event.preventDefault();
             const editIndex = document.getElementById('edit-index').value;
@@ -377,17 +532,16 @@
 
         function saveAndSync() {
             localStorage.setItem('meal_planner_meals', JSON.stringify(meals));
+            localStorage.setItem('meal_planner_recipes', JSON.stringify(recipes));
             localStorage.setItem('meal_planner_grocery', JSON.stringify(groceryList));
         }
 
-        // Render History Table with Pop-out Triggers
+        // Render History Table
         function renderHistory() {
             const tbody = document.getElementById('history-table-body');
             if (!tbody) return;
-            const searchEl = document.getElementById('search-history');
-            const search = searchEl ? searchEl.value.toLowerCase() : '';
-            const catFilterEl = document.getElementById('filter-category');
-            const catFilter = catFilterEl ? catFilterEl.value : '';
+            const search = (document.getElementById('search-history')?.value || '').toLowerCase();
+            const catFilter = document.getElementById('filter-category')?.value || '';
 
             const filtered = meals.filter(m => {
                 const name = m.name || '';
@@ -398,7 +552,7 @@
             });
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">No meals logged yet or matching search.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">No meal history found.</td></tr>`;
                 return;
             }
 
@@ -416,28 +570,11 @@
                         <td class="p-3 whitespace-nowrap text-xs font-medium">${safeDate}</td>
                         <td class="p-3 font-semibold text-slate-800">${safeName}</td>
                         <td class="p-3"><span class="bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold">${escapeHtml(m.category || 'Other')}</span></td>
-                        
-                        <!-- Ingredients cell with click trigger -->
-                        <td class="p-3 text-xs text-slate-500 max-w-xs truncate cursor-pointer hover:text-emerald-600 hover:underline"
-                            title="Click to view full ingredients"
-                            onclick="openRecipeModal('${safeName}', '${safeIngredients}', '${safeRecipe}')">
-                            ${safeIngredients}
-                        </td>
-
-                        <!-- Recipe cell with click trigger -->
-                        <td class="p-3 text-xs text-slate-500 max-w-xs truncate cursor-pointer hover:text-emerald-600 hover:underline"
-                            title="Click to view full recipe"
-                            onclick="openRecipeModal('${safeName}', '${safeIngredients}', '${safeRecipe}')">
-                            ${safeRecipe}
-                        </td>
-
+                        <td class="p-3 text-xs text-slate-500 max-w-xs truncate cursor-pointer hover:text-emerald-600 hover:underline" onclick="openRecipeModal('${safeName}', '${safeIngredients}', '${safeRecipe}')">${safeIngredients}</td>
+                        <td class="p-3 text-xs text-slate-500 max-w-xs truncate cursor-pointer hover:text-emerald-600 hover:underline" onclick="openRecipeModal('${safeName}', '${safeIngredients}', '${safeRecipe}')">${safeRecipe}</td>
                         <td class="p-3 text-center whitespace-nowrap">
-                            <button onclick="editMeal(${index})" class="text-blue-500 hover:text-blue-700 p-1.5 rounded-lg transition mr-1" title="Edit meal">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            <button onclick="deleteMeal(${index})" class="text-rose-500 hover:text-rose-700 p-1.5 rounded-lg transition" title="Delete meal">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+                            <button onclick="editMeal(${index})" class="text-blue-500 hover:text-blue-700 p-1.5 transition mr-1" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="deleteMeal(${index})" class="text-rose-500 hover:text-rose-700 p-1.5 transition" title="Delete"><i class="fa-solid fa-trash-can"></i></button>
                         </td>
                     </tr>
                 `;
@@ -445,10 +582,21 @@
         }
 
         // Modal Controls
-        function openRecipeModal(name, ingredients, recipe) {
+        function openRecipeModal(name, ingredients, recipe, url = '') {
             document.getElementById('modalTitle').innerText = name || 'Meal Details';
             document.getElementById('modalIngredients').innerText = ingredients || 'No ingredients listed.';
             document.getElementById('modalRecipe').innerText = recipe || 'No recipe instructions provided.';
+            
+            const sourceContainer = document.getElementById('modalSourceContainer');
+            const sourceLink = document.getElementById('modalSourceLink');
+            if (url) {
+                sourceLink.href = url;
+                sourceLink.innerText = url;
+                sourceContainer.classList.remove('hidden');
+            } else {
+                sourceContainer.classList.add('hidden');
+            }
+
             document.getElementById('recipeModal').classList.remove('hidden');
         }
 
@@ -456,7 +604,6 @@
             document.getElementById('recipeModal').classList.add('hidden');
         }
 
-        // Edit & Delete
         function editMeal(index) {
             const m = meals[index];
             if (!m) return;
@@ -479,81 +626,91 @@
         }
 
         function deleteMeal(index) {
-            if (confirm("Are you sure you want to delete this meal?")) {
+            if (confirm("Delete this meal?")) {
                 meals.splice(index, 1);
                 saveAndSync();
                 renderHistory();
             }
         }
 
+        // Weekly Planner Renderer
         function renderCalendar() {
-    const grid = document.getElementById('weekly-planner-grid');
-    if (!grid) return;
-    
-    // Load saved weekly plan from localStorage or initialize empty
-    let weeklyPlan = JSON.parse(localStorage.getItem('meal_planner_weekly') || '{}');
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const grid = document.getElementById('weekly-planner-grid');
+            if (!grid) return;
+            let weeklyPlan = JSON.parse(localStorage.getItem('meal_planner_weekly') || '{}');
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-    grid.innerHTML = days.map(day => {
-        const assignedMealId = weeklyPlan[day] || '';
-        
-        // Build options for select dropdown from your logged meals history
-        let optionsHtml = `<option value="">-- Choose a meal --</option>`;
-        meals.forEach(m => {
-            const isSelected = m.id === assignedMealId ? 'selected' : '';
-            optionsHtml += `<option value="${m.id}" ${isSelected}>${escapeHtml(m.name)} (${m.category || 'Other'})</option>`;
-        });
+            grid.innerHTML = days.map(day => {
+                const assignedId = weeklyPlan[day] || '';
+                let optionsHtml = `<option value="">-- Choose from Recipes --</option>`;
+                recipes.forEach(r => {
+                    const isSelected = r.id === assignedId ? 'selected' : '';
+                    optionsHtml += `<option value="${r.id}" ${isSelected}>${escapeHtml(r.name)}</option>`;
+                });
 
-        // Find assigned meal details if exists
-        const assignedMeal = meals.find(m => m.id === assignedMealId);
-        let detailHtml = `<div class="text-xs text-slate-400 italic mt-2">No meal assigned</div>`;
-        
-        if (assignedMeal) {
-            const safeIngredients = escapeHtml(assignedMeal.ingredients || '');
-            const safeRecipe = escapeHtml(assignedMeal.recipe || '');
-            detailHtml = `
-                <div class="mt-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-100 text-xs space-y-1">
-                    <p class="font-bold text-emerald-900">${escapeHtml(assignedMeal.name)}</p>
-                    <p class="text-emerald-700 truncate cursor-pointer hover:underline" onclick="openRecipeModal('${escapeHtml(assignedMeal.name)}', '${safeIngredients}', '${safeRecipe}')" title="Click to view full recipe">
-                        🍴 View Ingredients & Recipe
-                    </p>
-                </div>
-            `;
+                const assignedRecipe = recipes.find(r => r.id === assignedId);
+                let detailHtml = `<div class="text-xs text-slate-400 italic mt-2">No recipe assigned</div>`;
+                
+                if (assignedRecipe) {
+                    const safeIng = escapeHtml(assignedRecipe.ingredients || '');
+                    const safeRec = escapeHtml(assignedRecipe.recipe || '');
+                    const safeUrl = escapeHtml(assignedRecipe.url || '');
+                    detailHtml = `
+                        <div class="mt-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-100 text-xs space-y-1">
+                            <p class="font-bold text-emerald-900">${escapeHtml(assignedRecipe.name)}</p>
+                            <p class="text-emerald-700 cursor-pointer hover:underline" onclick="openRecipeModal('${escapeHtml(assignedRecipe.name)}', '${safeIng}', '${safeRec}', '${safeUrl}')">
+                                🍴 View Recipe Details
+                            </p>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between space-y-3 shadow-sm">
+                        <div>
+                            <h3 class="font-bold text-slate-700 text-sm border-b pb-2">${day}</h3>
+                            <div class="mt-3 space-y-2">
+                                <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Plan Recipe</label>
+                                <select onchange="assignRecipeToDay('${day}', this.value)" class="w-full px-2.5 py-1.5 border rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    ${optionsHtml}
+                                </select>
+                            </div>
+                        </div>
+                        <div>${detailHtml}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        return `
-            <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/50 flex flex-col justify-between space-y-3 shadow-sm">
-                <div>
-                    <h3 class="font-bold text-slate-700 text-sm border-b pb-2 flex justify-between items-center">
-                        <span>${day}</span>
-                        <span class="text-[10px] text-slate-400 font-normal">Active Plan</span>
-                    </h3>
-                    <div class="mt-3 space-y-2">
-                        <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Assign Meal</label>
-                        <select onchange="assignMealToDay('${day}', this.value)" class="w-full px-2.5 py-1.5 border rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            ${optionsHtml}
-                        </select>
-                    </div>
-                </div>
-                <div>
-                    ${detailHtml}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
+        function assignRecipeToDay(day, recipeId) {
+            let weeklyPlan = JSON.parse(localStorage.getItem('meal_planner_weekly') || '{}');
+            if (recipeId) {
+                weeklyPlan[day] = recipeId;
+            } else {
+                delete weeklyPlan[day];
+            }
+            localStorage.setItem('meal_planner_weekly', JSON.stringify(weeklyPlan));
+            renderCalendar();
+        }
 
-function assignMealToDay(day, mealId) {
-    let weeklyPlan = JSON.parse(localStorage.getItem('meal_planner_weekly') || '{}');
-    if (mealId) {
-        weeklyPlan[day] = mealId;
-    } else {
-        delete weeklyPlan[day];
-    }
-    localStorage.setItem('meal_planner_weekly', JSON.stringify(weeklyPlan));
-    renderCalendar(); // Re-render to show updated details card
-}
-        
+        // Grocery List Manager
+        function renderGrocery() {
+            const ul = document.getElementById('grocery-list-ul');
+            if (!ul) return;
+            if (groceryList.length === 0) {
+                ul.innerHTML = `<li class="p-4 text-center text-slate-400 text-sm">Your grocery list is empty.</li>`;
+                return;
+            }
+            ul.innerHTML = groceryList.map((item, idx) => `
+                <li class="py-2.5 flex justify-between items-center text-sm">
+                    <span class="${item.done ? 'line-through text-slate-400' : 'text-slate-700'}">${escapeHtml(item.text)}</span>
+                    <div class="flex gap-2">
+                        <button onclick="toggleGrocery(${idx})" class="text-emerald-600 hover:text-emerald-800 text-xs">✓</button>
+                        <button onclick="deleteGrocery(${idx})" class="text-rose-500 hover:text-rose-700 text-xs">✕</button>
+                    </div>
+                </li>
+            `).join('');
+        }
 
         function addGroceryItem() {
             const input = document.getElementById('new-grocery-item');
@@ -576,34 +733,31 @@ function assignMealToDay(day, mealId) {
             renderGrocery();
         }
 
-        // Export / Import Backup (Robust CSV & JSON parser)
+        // Export / Import Backup
         function exportJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(meals, null, 2));
+            const backup = { meals, recipes, groceryList };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
-            dlAnchor.setAttribute("download", "meal_planner_backup.json");
+            dlAnchor.setAttribute("download", "meal_planner_full_backup.json");
             document.body.appendChild(dlAnchor);
             dlAnchor.click();
             dlAnchor.remove();
         }
 
         function exportCSV() {
-            let csv = 'Date,Meal Name,Category,Ingredients,Recipe\n';
+            let csv = 'Type,Date,Name,Category,Ingredients,Recipe,URL\n';
+            recipes.forEach(r => {
+                csv += `"Recipe","","${(r.name || '').replace(/"/g, '""')}","${(r.category || '').replace(/"/g, '""')}","${(r.ingredients || '').replace(/"/g, '""')}","${(r.recipe || '').replace(/"/g, '""')}","${(r.url || '').replace(/"/g, '""')}"\n`;
+            });
             meals.forEach(m => {
-                const row = [
-                    `"${(m.date || '').replace(/"/g, '""')}"`,
-                    `"${(m.name || '').replace(/"/g, '""')}"`,
-                    `"${(m.category || '').replace(/"/g, '""')}"`,
-                    `"${(m.ingredients || '').replace(/"/g, '""')}"`,
-                    `"${(m.recipe || '').replace(/"/g, '""')}"`
-                ];
-                csv += row.join(',') + '\n';
+                csv += `"Meal","${(m.date || '')}","${(m.name || '').replace(/"/g, '""')}","${(m.category || '').replace(/"/g, '""')}","${(m.ingredients || '').replace(/"/g, '""')}","${(m.recipe || '').replace(/"/g, '""')}",""\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", url);
-            dlAnchor.setAttribute("download", "meal_history.csv");
+            dlAnchor.setAttribute("download", "meal_planner_library.csv");
             document.body.appendChild(dlAnchor);
             dlAnchor.click();
             dlAnchor.remove();
@@ -616,61 +770,72 @@ function assignMealToDay(day, mealId) {
             reader.onload = function(e) {
                 try {
                     const content = e.target.result;
-                    if (file.name.endsWith('.json') || content.trim().startsWith('[')) {
-                        meals = JSON.parse(content);
+                    if (file.name.endsWith('.json') || content.trim().startsWith('{') || content.trim().startsWith('[')) {
+                        const parsed = JSON.parse(content);
+                        if (Array.isArray(parsed)) {
+                            meals = parsed;
+                        } else {
+                            if (parsed.meals) meals = parsed.meals;
+                            if (parsed.recipes) recipes = parsed.recipes;
+                            if (parsed.groceryList) groceryList = parsed.groceryList;
+                        }
                     } else {
+                        // CSV Import
                         const lines = content.split('\n');
-                        meals = [];
                         for (let i = 1; i < lines.length; i++) {
                             const line = lines[i].trim();
                             if (!line) continue;
-                            
                             const cols = [];
                             let inQuotes = false;
                             let currentCol = '';
                             for (let c = 0; c < line.length; c++) {
                                 let char = line[c];
                                 if (char === '"') {
-                                    if (inQuotes && line[c + 1] === '"') {
-                                        currentCol += '"';
-                                        c++;
-                                    } else {
-                                        inQuotes = !inQuotes;
-                                    }
+                                    if (inQuotes && line[c + 1] === '"') { currentCol += '"'; c++; }
+                                    else { inQuotes = !inQuotes; }
                                 } else if (char === ',' && !inQuotes) {
-                                    cols.push(currentCol);
-                                    currentCol = '';
-                                } else {
-                                    currentCol += char;
-                                }
+                                    cols.push(currentCol); currentCol = '';
+                                } else { currentCol += char; }
                             }
                             cols.push(currentCol);
 
-                            if (cols.length >= 2) {
-                                meals.push({
-                                    id: Date.now().toString() + i,
-                                    date: (cols[0] || '').replace(/^"|"$/g, ''),
-                                    name: (cols[1] || '').replace(/^"|"$/g, ''),
-                                    category: (cols[2] || '').replace(/^"|"$/g, '') || 'Other',
-                                    ingredients: (cols[3] || '').replace(/^"|"$/g, ''),
-                                    recipe: (cols[4] || '').replace(/^"|"$/g, '')
-                                });
+                            if (cols.length >= 3) {
+                                const type = cols[0].replace(/^"|"$/g, '');
+                                if (type === 'Recipe') {
+                                    recipes.push({
+                                        id: Date.now().toString() + i,
+                                        name: cols[2].replace(/^"|"$/g, ''),
+                                        category: cols[3].replace(/^"|"$/g, '') || 'Other',
+                                        ingredients: cols[4].replace(/^"|"$/g, ''),
+                                        recipe: cols[5].replace(/^"|"$/g, ''),
+                                        url: cols[6] ? cols[6].replace(/^"|"$/g, '') : ''
+                                    });
+                                } else {
+                                    meals.push({
+                                        id: Date.now().toString() + i,
+                                        date: cols[1].replace(/^"|"$/g, ''),
+                                        name: cols[2].replace(/^"|"$/g, ''),
+                                        category: cols[3].replace(/^"|"$/g, '') || 'Other',
+                                        ingredients: cols[4].replace(/^"|"$/g, ''),
+                                        recipe: cols[5] ? cols[5].replace(/^"|"$/g, '') : ''
+                                    });
+                                }
                             }
                         }
                     }
                     saveAndSync();
-                    alert("Data imported successfully!");
-                    switchTab('history');
+                    alert("Library and data imported successfully!");
+                    switchTab('recipes');
                 } catch (err) {
                     console.error("Import error:", err);
-                    alert("Error parsing backup file. Please check the file format.");
+                    alert("Error parsing backup file.");
                 }
             };
             reader.readAsText(file);
         }
 
-        // Initialize default view to Log tab on startup
-        switchTab('log');
+        // Initialize default view to Recipes tab on startup
+        switchTab('recipes');
     </script>
 </body>
 </html>
