@@ -32,28 +32,34 @@
         
         <!-- ================= 1. LOG MEAL TAB ================= -->
         <section id="section-log" class="space-y-6 max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-3 gap-2">
+            <div class="border-b pb-3">
                 <h2 id="form-title" class="text-lg font-bold text-slate-800">Log New Meal</h2>
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <input type="password" id="gemini-key" placeholder="Gemini API Key" class="px-3 py-1.5 text-xs border rounded-xl w-full sm:w-44 focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50" title="Enter Gemini API key for AI photo analysis">
-                </div>
             </div>
             
             <form id="mealForm" onsubmit="handleMealSubmit(event)" class="space-y-4">
                 <input type="hidden" id="edit-index" value="">
                 
-                <!-- AI Vision Photo Upload & Camera Capture -->
+                <!-- Photo Upload & Camera Options -->
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">AI Photo Scanner / Camera</label>
-                    <div class="flex items-center gap-3">
-                        <!-- capture="environment" enables direct mobile camera usage -->
-                        <input type="file" id="meal-photo-file" accept="image/*" capture="environment" onchange="handleGeminiPhotoScan(event)" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer border rounded-xl">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Meal Photo (Upload or Take Picture)</label>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <!-- Upload from gallery/files -->
+                        <label class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-xl cursor-pointer text-sm font-semibold transition">
+                            <i class="fa-solid fa-upload"></i> Upload Image
+                            <input type="file" id="meal-photo-upload" accept="image/*" onchange="handleGeminiPhotoScan(event)" class="hidden">
+                        </label>
+                        <!-- Capture directly from device camera -->
+                        <label class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-xl cursor-pointer text-sm font-semibold transition">
+                            <i class="fa-solid fa-camera"></i> Take Picture
+                            <input type="file" id="meal-photo-camera" accept="image/*" capture="environment" onchange="handleGeminiPhotoScan(event)" class="hidden">
+                        </label>
                     </div>
-                    <div id="ai-loading" class="hidden text-xs text-emerald-600 font-medium mt-1.5 animate-pulse flex items-center gap-1.5">
+
+                    <div id="ai-loading" class="hidden text-xs text-emerald-600 font-medium mt-2 animate-pulse flex items-center gap-1.5">
                         <i class="fa-solid fa-wand-magic-sparkles"></i> Analyzing meal with Gemini AI...
                     </div>
                     <div id="photo-preview-container" class="mt-2 hidden">
-                        <img id="photo-preview" src="" alt="Preview" class="w-24 h-24 object-cover rounded-xl border border-slate-200">
+                        <img id="photo-preview" src="" alt="Preview" class="w-24 h-24 object-cover rounded-xl border border-slate-200 shadow-sm">
                     </div>
                 </div>
 
@@ -163,8 +169,15 @@
 
         <!-- ================= 5. DATA / BACKUP TAB ================= -->
         <section id="section-settings" class="hidden space-y-6 max-w-xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h2 class="text-lg font-bold text-slate-800">Data & Backup Management</h2>
+            <h2 class="text-lg font-bold text-slate-800">Data & Settings</h2>
             <div class="space-y-4 text-sm">
+                <!-- Gemini API Key setting moved here -->
+                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <h3 class="font-semibold text-slate-700">Gemini AI Vision API Key</h3>
+                    <p class="text-xs text-slate-500">Enter your Gemini API key to enable automated photo recognition and auto-fill.</p>
+                    <input type="password" id="gemini-key" placeholder="Paste Gemini API Key here..." oninput="saveApiKey()" class="w-full px-3 py-2 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                </div>
+
                 <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                     <h3 class="font-semibold text-slate-700">Export Backup</h3>
                     <p class="text-xs text-slate-500">Download your complete meal database as a JSON backup or CSV file.</p>
@@ -214,6 +227,17 @@
         let groceryList = JSON.parse(localStorage.getItem('meal_planner_grocery') || '[]');
         let currentPhotoBase64 = '';
 
+        // Load saved API key on startup
+        const savedApiKey = localStorage.getItem('gemini_api_key') || '';
+        if (document.getElementById('gemini-key')) {
+            document.getElementById('gemini-key').value = savedApiKey;
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('gemini-key').value.trim();
+            localStorage.setItem('gemini_api_key', key);
+        }
+
         // Set default date on load
         document.getElementById('meal-date').valueAsDate = new Date();
 
@@ -246,7 +270,7 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // ================= GEMINI AI VISION & CAMERA INTEGRATION =================
+        // ================= GEMINI AI VISION & PHOTO INTEGRATION =================
         async function handleGeminiPhotoScan(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -258,7 +282,7 @@
                 preview.src = currentPhotoBase64;
                 document.getElementById('photo-preview-container').classList.remove('hidden');
 
-                const apiKey = document.getElementById('gemini-key').value.trim();
+                const apiKey = localStorage.getItem('gemini_api_key') || document.getElementById('gemini-key').value.trim();
                 if (!apiKey) return; // Just preview if no API key entered yet
 
                 const loadingEl = document.getElementById('ai-loading');
@@ -300,7 +324,7 @@
             reader.readAsDataURL(file);
         }
 
-        // Handle Form Submit (Create or Edit)
+         // Handle Form Submit (Create or Edit)
         function handleMealSubmit(event) {
             event.preventDefault();
             const editIndex = document.getElementById('edit-index').value;
@@ -341,7 +365,7 @@
             localStorage.setItem('meal_planner_grocery', JSON.stringify(groceryList));
         }
 
-           // Render History Table with Pop-out Triggers
+        // Render History Table with Pop-out Triggers
         function renderHistory() {
             const tbody = document.getElementById('history-table-body');
             if (!tbody) return;
@@ -405,7 +429,7 @@
             }).join('');
         }
 
-          // Modal Controls
+        // Modal Controls
         function openRecipeModal(name, ingredients, recipe) {
             document.getElementById('modalTitle').innerText = name || 'Meal Details';
             document.getElementById('modalIngredients').innerText = ingredients || 'No ingredients listed.';
@@ -447,7 +471,7 @@
             }
         }
 
-          // Calendar Planner Renderer
+        // Calendar Planner Renderer
         function renderCalendar() {
             const grid = document.getElementById('weekly-planner-grid');
             if (!grid) return;
@@ -543,7 +567,6 @@
                     if (file.name.endsWith('.json') || content.trim().startsWith('[')) {
                         meals = JSON.parse(content);
                     } else {
-                        // Robust CSV Parser handling quoted fields with newlines/commas
                         const lines = content.split('\n');
                         meals = [];
                         for (let i = 1; i < lines.length; i++) {
@@ -594,7 +617,7 @@
             reader.readAsText(file);
         }
 
-         // Initialize default view to Log tab on startup
+        // Initialize default view to Log tab on startup
         switchTab('log');
     </script>
 </body>
