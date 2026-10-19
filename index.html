@@ -17,13 +17,14 @@
             <h1 class="text-xl font-bold flex items-center gap-2">
                 <i class="fa-solid fa-utensils"></i> Meal Planner Pro
             </h1>
-            <nav class="flex gap-2 sm:gap-4 text-sm font-medium overflow-x-auto w-full sm:w-auto justify-center">
-                <button onclick="switchTab('log')" id="tab-log" class="px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold">Log Meal</button>
-                <button onclick="switchTab('recipes')" id="tab-recipes" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Recipes</button>
-                <button onclick="switchTab('history')" id="tab-history" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">History</button>
-                <button onclick="switchTab('calendar')" id="tab-calendar" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Planner</button>
-                <button onclick="switchTab('grocery')" id="tab-grocery" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Grocery</button>
-                <button onclick="switchTab('settings')" id="tab-settings" class="px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Data / Backup</button>
+            <!-- Fixed mobile scrolling with justify-start and whitespace-nowrap -->
+            <nav class="flex gap-2 sm:gap-4 text-sm font-medium overflow-x-auto w-full sm:w-auto justify-start sm:justify-center whitespace-nowrap pb-1 sm:pb-0 scrollbar-none">
+                <button onclick="switchTab('log')" id="tab-log" class="flex-shrink-0 px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold">Log Meal</button>
+                <button onclick="switchTab('recipes')" id="tab-recipes" class="flex-shrink-0 px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Recipes</button>
+                <button onclick="switchTab('history')" id="tab-history" class="flex-shrink-0 px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">History</button>
+                <button onclick="switchTab('calendar')" id="tab-calendar" class="flex-shrink-0 px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Planner</button>
+                <button onclick="switchTab('grocery')" id="tab-grocery" class="flex-shrink-0 px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Grocery</button>
+                <button onclick="switchTab('settings')" id="tab-settings" class="flex-shrink-0 px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Data / Backup</button>
             </nav>
         </div>
     </header>
@@ -260,7 +261,7 @@
                         <option value="Beef / Pork">Beef / Pork</option>
                         <option value="Other">Other</option>
                     </select>
-                 </div>
+                </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Recipe URL (Website Source)</label>
                     <input type="url" id="lib-url" placeholder="https://www.themediterraneandish.com/mujadara..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
@@ -308,13 +309,13 @@
                 const section = document.getElementById(`section-${t}`);
                 const tabBtn = document.getElementById(`tab-${t}`);
                 if (section) section.classList.add('hidden');
-                if (tabBtn) tabBtn.className = "px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100";
+                if (tabBtn) tabBtn.className = "flex-shrink-0 px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100";
             });
 
             const activeSection = document.getElementById(`section-${tabName}`);
             const activeTabBtn = document.getElementById(`tab-${tabName}`);
             if (activeSection) activeSection.classList.remove('hidden');
-            if (activeTabBtn) activeTabBtn.className = "px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold";
+            if (activeTabBtn) activeTabBtn.className = "flex-shrink-0 px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold";
 
             if (tabName === 'recipes') renderRecipes();
             if (tabName === 'history') renderHistory();
@@ -331,7 +332,7 @@
                 .replace(/'/g, '&#039;');
         }
 
-         // ================= RECIPE LIBRARY MANAGEMENT =================
+        // ================= RECIPE LIBRARY MANAGEMENT =================
         function renderRecipes() {
             const grid = document.getElementById('recipes-grid');
             if (!grid) return;
@@ -431,7 +432,7 @@
             }
         }
 
-          // ================= GEMINI AI VISION INTEGRATION =================
+        // ================= GEMINI AI VISION INTEGRATION =================
         async function handleGeminiPhotoScan(event) {
             const file = event.target.files[0];
             if (!file) return;
