@@ -169,7 +169,7 @@
         <section id="section-calendar" class="hidden space-y-4">
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h2 class="text-lg font-bold text-slate-800 mb-2">Weekly Meal Planner</h2>
-                <p class="text-xs text-slate-500 mb-4">Assign logged or custom recipes to your weekly schedule.</p>
+                <p class="text-xs text-slate-500 mb-4">Assign recipes to your weekly schedule. Your grocery list updates automatically!</p>
                 <div id="weekly-planner-grid" class="grid grid-cols-1 md:grid-cols-7 gap-4">
                     <!-- Populated dynamically -->
                 </div>
@@ -178,9 +178,12 @@
 
         <!-- ================= 5. GROCERY LIST TAB ================= -->
         <section id="section-grocery" class="hidden space-y-4 max-w-xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h2 class="text-lg font-bold text-slate-800">Grocery List</h2>
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-800">Grocery List</h2>
+                <span class="text-xs text-emerald-600 font-medium bg-emerald-50 px-2.5 py-1 rounded-full">Auto-synced with Planner</span>
+            </div>
             <div class="flex gap-2">
-                <input type="text" id="new-grocery-item" placeholder="Add grocery item..." class="flex-grow px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <input type="text" id="new-grocery-item" placeholder="Add custom grocery item..." class="flex-grow px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <button onclick="addGroceryItem()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition">Add</button>
             </div>
             <ul id="grocery-list-ul" class="divide-y divide-slate-100 mt-4">
@@ -410,7 +413,7 @@
                             <p class="text-xs text-slate-500 line-clamp-3 mt-2"><strong class="text-slate-700">Ingredients:</strong> ${safeIngredients}</p>
                         </div>
                         <div class="flex justify-between items-center pt-3 border-t border-slate-100 text-xs">
-                            <button onclick="openRecipeModal('${safeName}', '${safeIngredients}', '${safeRecipe}', '${safeUrl}')" class="text-emerald-600 font-semibold hover:underline">View Full Recipe</button>
+                            <button onclick="openRecipeModalFromId('${r.id}')" class="text-emerald-600 font-semibold hover:underline">View Full Recipe</button>
                             <div class="space-x-2">
                                 <button onclick="editRecipeLib(${idx})" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen-to-square"></i></button>
                                 <button onclick="deleteRecipeLib(${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash-can"></i></button>
@@ -645,6 +648,12 @@
             document.getElementById('recipeModal').classList.remove('hidden');
         }
 
+        function openRecipeModalFromId(recipeId) {
+            const recipe = recipes.find(r => r.id === recipeId);
+            if (!recipe) return;
+            openRecipeModal(recipe.name, recipe.ingredients, recipe.recipe, recipe.url);
+        }
+
         function closeRecipeModal() {
             document.getElementById('recipeModal').classList.add('hidden');
         }
@@ -678,7 +687,7 @@
             }
         }
 
-        // Weekly Planner Renderer
+        // Weekly Planner Renderer & Auto-Sync Grocery List
         function renderCalendar() {
             const grid = document.getElementById('weekly-planner-grid');
             if (!grid) return;
@@ -697,15 +706,12 @@
                 let detailHtml = `<div class="text-xs text-slate-400 italic mt-2">No recipe assigned</div>`;
                 
                 if (assignedRecipe) {
-                    const safeIng = escapeHtml(assignedRecipe.ingredients || '');
-                    const safeRec = escapeHtml(assignedRecipe.recipe || '');
-                    const safeUrl = escapeHtml(assignedRecipe.url || '');
                     detailHtml = `
                         <div class="mt-2 p-2.5 bg-emerald-50 rounded-xl border border-emerald-100 text-xs space-y-1">
                             <p class="font-bold text-emerald-900">${escapeHtml(assignedRecipe.name)}</p>
-                            <p class="text-emerald-700 cursor-pointer hover:underline" onclick="openRecipeModal('${escapeHtml(assignedRecipe.name)}', '${safeIng}', '${safeRec}', '${safeUrl}')">
+                            <button onclick="openRecipeModalFromId('${assignedRecipe.id}')" class="text-emerald-700 font-semibold hover:underline text-left block">
                                 🍴 View Recipe Details
-                            </p>
+                            </button>
                         </div>
                     `;
                 }
@@ -735,7 +741,39 @@
                 delete weeklyPlan[day];
             }
             localStorage.setItem('meal_planner_weekly', JSON.stringify(weeklyPlan));
+            
+            // AUTOMATICALLY REBUILD GROCERY LIST FROM PLANNER
+            rebuildGroceryListFromPlanner(weeklyPlan);
             renderCalendar();
+        }
+
+        function rebuildGroceryListFromPlanner(weeklyPlan) {
+            // Keep manual custom items (items not tied to any recipe source, or all if we want pure sync)
+            // Let's filter out old recipe-sourced items or regenerate based on active planner recipes:
+            let manualItems = groceryList.filter(item => !item.sourceDay);
+            let newGroceryItems = [...manualItems];
+
+            Object.keys(weeklyPlan).forEach(day => {
+                const recipeId = weeklyPlan[day];
+                const recipe = recipes.find(r => r.id === recipeId);
+                if (recipe && recipe.ingredients) {
+                    // Split ingredients by newline or commas
+                    const lines = recipe.ingredients.split(/\r?\n|,/);
+                    lines.forEach(line => {
+                        const cleanLine = line.trim();
+                        if (cleanLine) {
+                            newGroceryItems.push({
+                                text: `[${day.slice(0,3)}] ${cleanLine}`,
+                                done: false,
+                                sourceDay: day
+                            });
+                        }
+                    });
+                }
+            });
+
+            groceryList = newGroceryItems;
+            saveAndSync();
         }
 
         // Grocery List Manager
@@ -743,15 +781,15 @@
             const ul = document.getElementById('grocery-list-ul');
             if (!ul) return;
             if (groceryList.length === 0) {
-                ul.innerHTML = `<li class="p-4 text-center text-slate-400 text-sm">Your grocery list is empty.</li>`;
+                ul.innerHTML = `<li class="p-4 text-center text-slate-400 text-sm">Your grocery list is empty. Assign recipes in the Planner tab to auto-populate!</li>`;
                 return;
             }
             ul.innerHTML = groceryList.map((item, idx) => `
                 <li class="py-2.5 flex justify-between items-center text-sm">
                     <span class="${item.done ? 'line-through text-slate-400' : 'text-slate-700'}">${escapeHtml(item.text)}</span>
                     <div class="flex gap-2">
-                        <button onclick="toggleGrocery(${idx})" class="text-emerald-600 hover:text-emerald-800 text-xs">✓</button>
-                        <button onclick="deleteGrocery(${idx})" class="text-rose-500 hover:text-rose-700 text-xs">✕</button>
+                        <button onclick="toggleGrocery(${idx})" class="text-emerald-600 hover:text-emerald-800 text-xs" title="Toggle Done">✓</button>
+                        <button onclick="deleteGrocery(${idx})" class="text-rose-500 hover:text-rose-700 text-xs" title="Delete">✕</button>
                     </div>
                 </li>
             `).join('');
@@ -780,7 +818,8 @@
 
         // Export / Import Backup
         function exportJSON() {
-            const backup = { meals, recipes, groceryList };
+            const weeklyPlan = JSON.parse(localStorage.getItem('meal_planner_weekly') || '{}');
+            const backup = { meals, recipes, groceryList, weeklyPlan };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup, null, 2));
             const dlAnchor = document.createElement('a');
             dlAnchor.setAttribute("href", dataStr);
@@ -823,6 +862,7 @@
                             if (parsed.meals) meals = parsed.meals;
                             if (parsed.recipes) recipes = parsed.recipes;
                             if (parsed.groceryList) groceryList = parsed.groceryList;
+                            if (parsed.weeklyPlan) localStorage.setItem('meal_planner_weekly', JSON.stringify(parsed.weeklyPlan));
                         }
                     } else {
                         // CSV Import
