@@ -17,7 +17,6 @@
             <h1 class="text-xl font-bold flex items-center gap-2">
                 <i class="fa-solid fa-utensils"></i> Meal Planner Pro
             </h1>
-            <!-- Fixed mobile scrolling with justify-start and whitespace-nowrap -->
             <nav class="flex gap-2 sm:gap-4 text-sm font-medium overflow-x-auto w-full sm:w-auto justify-start sm:justify-center whitespace-nowrap pb-1 sm:pb-0 scrollbar-none">
                 <button onclick="switchTab('log')" id="tab-log" class="flex-shrink-0 px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold">Log Meal</button>
                 <button onclick="switchTab('recipes')" id="tab-recipes" class="flex-shrink-0 px-3 py-1.5 rounded-lg transition hover:bg-emerald-700/50 text-emerald-100">Recipes</button>
@@ -41,6 +40,14 @@
             <form id="mealForm" onsubmit="handleMealSubmit(event)" class="space-y-4">
                 <input type="hidden" id="edit-index" value="">
                 
+                <!-- Quick Recipe Library Selector Dropdown -->
+                <div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 space-y-2">
+                    <label class="block text-xs font-semibold text-emerald-800 uppercase tracking-wider">Quick-Fill from Recipe Library</label>
+                    <select id="recipe-quick-select" onchange="fillFromRecipeLibrary(this.value)" class="w-full px-3 py-2 border rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">-- Choose a saved recipe to log --</option>
+                    </select>
+                </div>
+
                 <!-- Photo Upload & Camera Options -->
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Meal Photo (Upload or Take Picture)</label>
@@ -247,7 +254,7 @@
                 <input type="hidden" id="recipe-lib-index" value="">
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Recipe Title</label>
-                    <input type="text" id="lib-name" required placeholder="e.g. Mujadara" class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="text" id="lib-name" required placeholder="e.g. Instant Pot Coconut Spinach Lentil Curry with Carrots" class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Category</label>
@@ -256,7 +263,7 @@
                         <option value="Rice Dish">Rice Dish</option>
                         <option value="Seafood">Seafood</option>
                         <option value="Vegetarian">Vegetarian</option>
-                        <option value="Soup / Curry">Soup / Curry</option>
+                        <option value="Soup / Curry" selected>Soup / Curry</option>
                         <option value="Tacos / Wraps">Tacos / Wraps</option>
                         <option value="Beef / Pork">Beef / Pork</option>
                         <option value="Other">Other</option>
@@ -264,15 +271,26 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Recipe URL (Website Source)</label>
-                    <input type="url" id="lib-url" placeholder="https://www.themediterraneandish.com/mujadara..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    <input type="url" id="lib-url" placeholder="https://www.budgetbytes.com/creamy-coconut-curry-lentils-with-spinach/" class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ingredients</label>
-                    <textarea id="lib-ingredients" rows="3" placeholder="Black lentils, onions, rice, olive oil..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    <textarea id="lib-ingredients" rows="3" placeholder="1 cup brown or black lentils, 2 medium carrots, 1 small yellow onion, 2 cloves garlic, 1 can coconut milk, 2 cups vegetable broth, fresh baby spinach, cumin, smoked paprika, thyme..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">1 cup brown or black lentils (rinsed and drained)
+2 medium carrots, peeled and sliced into rounds or half-moons
+1 small yellow onion, diced
+2 cloves garlic, minced
+1 can (14 oz) full-fat coconut milk
+2 cups vegetable broth
+2-3 cups fresh baby spinach
+1 tsp ground cumin, 1 tsp smoked paprika, 1/2 tsp dried thyme, 1 bay leaf, salt and pepper</textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Instructions / Notes</label>
-                    <textarea id="lib-recipe" rows="4" placeholder="1 3/4 cups water, 8 minutes on manual..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+                    <textarea id="lib-recipe" rows="4" placeholder="Step-by-step instructions..." class="w-full px-3 py-2 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">1. Sauté Aromatics: Turn Instant Pot on Sauté mode. Add 1 tbsp olive oil and diced onions (3-5 mins), then stir in garlic, cumin, smoked paprika, and thyme for 30 seconds. Press Cancel.
+2. Combine: Pour in vegetable broth (scraping browned bits). Add lentils, sliced carrots, bay leaf, salt, and pepper. Stir well.
+3. Pressure Cook: Secure lid, set valve to Sealing. Pressure Cook / Manual for 8 minutes on High Pressure.
+4. Pressure Release: 10-minute natural pressure release, then vent remaining steam.
+5. Finish: Remove lid, discard bay leaf. Stir in coconut milk and baby spinach. Let sit 2-3 minutes until spinach is wilted and sauce is creamy.</textarea>
                 </div>
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" onclick="closeRecipeFormModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-300 transition">Cancel</button>
@@ -289,6 +307,19 @@
         let recipes = JSON.parse(localStorage.getItem('meal_planner_recipes') || '[]');
         let groceryList = JSON.parse(localStorage.getItem('meal_planner_grocery') || '[]');
         let currentPhotoBase64 = '';
+
+        // Preload default Instant Pot Coconut Spinach Lentil Curry if library is empty
+        if (recipes.length === 0) {
+            recipes.push({
+                id: 'default-recipe-1',
+                name: 'Instant Pot Coconut Spinach Lentil Curry with Carrots',
+                category: 'Soup / Curry',
+                url: 'https://www.budgetbytes.com/creamy-coconut-curry-lentils-with-spinach/',
+                ingredients: '1 cup brown or black lentils (rinsed and drained)\n2 medium carrots, peeled and sliced into rounds or half-moons\n1 small yellow onion, diced\n2 cloves garlic, minced\n1 can (14 oz) full-fat coconut milk\n2 cups vegetable broth\n2-3 cups fresh baby spinach\n1 tsp ground cumin, 1 tsp smoked paprika, 1/2 tsp dried thyme, 1 bay leaf, salt and pepper',
+                recipe: '1. Sauté Aromatics: Turn Instant Pot on Sauté mode. Add 1 tbsp olive oil and diced onions (3-5 mins), then stir in garlic, cumin, smoked paprika, and thyme for 30 seconds. Press Cancel.\n2. Combine: Pour in vegetable broth (scraping browned bits). Add lentils, sliced carrots, bay leaf, salt, and pepper. Stir well.\n3. Pressure Cook: Secure lid, set valve to Sealing. Pressure Cook / Manual for 8 minutes on High Pressure.\n4. Pressure Release: 10-minute natural pressure release, then vent remaining steam.\n5. Finish: Remove lid, discard bay leaf. Stir in coconut milk and baby spinach. Let sit 2-3 minutes until spinach is wilted and sauce is creamy.'
+            });
+            localStorage.setItem('meal_planner_recipes', JSON.stringify(recipes));
+        }
 
         // Load saved API key on startup
         const savedApiKey = localStorage.getItem('gemini_api_key') || '';
@@ -317,6 +348,7 @@
             if (activeSection) activeSection.classList.remove('hidden');
             if (activeTabBtn) activeTabBtn.className = "flex-shrink-0 px-3 py-1.5 rounded-lg transition bg-emerald-700 text-white font-semibold";
 
+            if (tabName === 'log') updateRecipeQuickSelect();
             if (tabName === 'recipes') renderRecipes();
             if (tabName === 'history') renderHistory();
             if (tabName === 'calendar') renderCalendar();
@@ -330,6 +362,29 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        // Quick-Fill Dropdown from Recipe Library
+        function updateRecipeQuickSelect() {
+            const select = document.getElementById('recipe-quick-select');
+            if (!select) return;
+            
+            let html = `<option value="">-- Choose a saved recipe to log --</option>`;
+            recipes.forEach(r => {
+                html += `<option value="${r.id}">${escapeHtml(r.name)} (${escapeHtml(r.category || 'Other')})</option>`;
+            });
+            select.innerHTML = html;
+        }
+
+        function fillFromRecipeLibrary(recipeId) {
+            if (!recipeId) return;
+            const recipe = recipes.find(r => r.id === recipeId);
+            if (!recipe) return;
+
+            document.getElementById('meal-name').value = recipe.name || '';
+            document.getElementById('meal-category').value = recipe.category || 'Other';
+            document.getElementById('meal-ingredients').value = recipe.ingredients || '';
+            document.getElementById('meal-recipe').value = recipe.recipe || '';
         }
 
         // ================= RECIPE LIBRARY MANAGEMENT =================
